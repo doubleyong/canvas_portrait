@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<style type="text/css">
+    canvas{
+        border: 1px solid red;
+    }
+    .box{
+        position: relative;
+    }
+    #myCut{
+        position: absolute;
+        left:50px;
+        top:100px;
+        width: 200px;
+        height: 200px;
+        border: 1px solid red;
+    }
+</style>
+<body>
+<div class="box">
+    <canvas id="myCanvas" height="400px" width="300px"></canvas>
+    <div id="myCut"></div>
+</div>
+
+<img src="" style="display: none" id="disImg" alt="" />
+
+
+    <div onclick="chooseFile()">上传头像</div>
+    <input type="file" name="txtUpload" id="txtUpload" style="display:none"/>
+    <img src="" id="myCutImg"/>
+
+
+<input type="button" value="保存" onclick="SaveImage()"/>
+<script type="text/javascript">
+    var myCanvas = document.getElementById("myCanvas");
+    var context = myCanvas.getContext("2d");
+    var img = document.getElementById("disImg");
+    var imgObj;
+    var leftL=50;
+    var topL=100;
+    var flag=false;
+    window.onload=function(){
+        var txtfile = document.getElementById("txtUpload");
+        var cj = document.getElementById("myCut");
+
+        cj.onmousedown=function(){
+            var e=window.event||arguments[0];
+            var downX= e.clientX;
+            var downY= e.clientY;
+            var positionX=parseInt(document.defaultView.getComputedStyle(cj,null).left);
+            var positionY=parseInt(document.defaultView.getComputedStyle(cj,null).top);
+            var chaX=downX-positionX;
+            var chaY=downY-positionY;
+            cj.onmousemove=function(){
+                var e=window.event||arguments[0];
+                var X= e.clientX;
+                var Y= e.clientY;
+                var left = parseInt(X)-chaX;
+                var top = parseInt(Y)-chaY;
+
+                if(left>0&&left<100){
+                    cj.style.left=left+"px";
+                    leftL=left;
+                }
+                if(top>0&&top<200){
+                    cj.style.top=top+"px";
+                    topL=top;
+                }
+
+            }
+            cj.onmouseup=function(){
+                cj.onmousemove=null;
+            }
+        }
+
+        txtfile.onchange=function(){
+            var file = txtfile.files[0];
+            var reader = new FileReader(file);
+            reader.readAsDataURL(file);
+            reader.onload=function(){
+                console.log("reader load");
+                img.src = this.result;
+                img.onload=function(){
+                    console.log("img load");
+
+                    context.drawImage(img,0,0,300,400);
+                    // DrawImage(img); //缩放图片
+//                    context.drawImage(img,0,0,img.width,img.height); //按缩放后图片大小进行绘制
+                    img.src = myCanvas.toDataURL("image/png");
+
+                }
+            }
+        }
+    }
+
+    function SaveImage(){
+        //新canvas 绘制选择的图片部分
+        var newCanvas = document.createElement("canvas");
+        newCanvas.height = 200;
+        newCanvas.width =200;
+
+        newCanvas.getContext("2d").drawImage(img,leftL,topL,200,200,0,0,200,200);
+        var imgData = newCanvas.toDataURL("image/png"); //base64
+
+        console.log(imgData);
+        var cutimg = document.getElementById("myCutImg");
+        cutimg.src = newCanvas.toDataURL("image/png");
+
+    }
+
+    function chooseFile(){
+        var file = document.getElementById("txtUpload");
+        file.click();
+    }
+
+    function DrawImage(ImgD){
+        var image=new Image();
+        var iwidth = 300;  //定义允许图片宽度
+        var iheight = 400;  //定义允许图片高度
+        image.src=ImgD.src;
+        if(image.width>0 && image.height>0){
+            flag=true;
+            if(image.width/image.height>= iwidth/iheight){
+                if(image.width>iwidth){
+                    ImgD.width=iwidth;
+                    ImgD.height=(image.height*iwidth)/image.width;
+                }else{
+                    ImgD.width=image.width;
+                    ImgD.height=image.height;
+                }
+                ImgD.alt=image.width+"×"+image.height;
+            }
+            else{
+                if(image.height>iheight){
+                    ImgD.height=iheight;
+                    ImgD.width=(image.width*iheight)/image.height;
+                }else{
+                    ImgD.width=image.width;
+                    ImgD.height=image.height;
+                }
+                ImgD.alt=image.width+"×"+image.height;
+            }
+        }
+    }
+</script>
+</body>
+</html>

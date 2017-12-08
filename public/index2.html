@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+
+        button{
+            background-color: cadetblue;
+            border-radius: 5px;
+            color:white;
+            height: 30px;
+            width: 200px;
+        }
+        #bgDiv{
+            height: 300px;
+            width:300px;
+            border:1px solid red;
+            margin-bottom: 10px;
+            position: relative;
+            text-align: center;
+            left: 0px;
+            right: 0px;
+        }
+        #disImg
+        {
+            margin: 0 auto;
+            bottom: 0;
+            border: 1px solid black;
+            display: none;
+        }
+        #cj{
+            height: 150px;
+            width: 150px;
+            position: absolute;
+            top:50px;
+            left:50px;
+            z-index: 1;
+            border: 2px solid white;
+            margin: 0px auto;
+        }
+
+        #head{
+            position: absolute;
+
+            right: 200px;
+            top:100px;
+            border: 1px solid red;
+            height: 150px;
+            width: 150px;
+        }
+        #father{
+            width: 300px;
+            height: 300px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<!--显示裁剪后的图片-->
+<img id="head" />
+<!--<canvas id="cjCanvas"></canvas>-->
+<div id="father">
+<canvas id="bgDiv" height="300px" width="300px">
+
+</canvas>
+    <div id="cj"></div>
+</div>
+<!--上传的头像显示到Canvas，然后通canvas 生成缩放后的图片-->
+<img id="disImg" />
+<form action="uploadImage.do" method="post" enctype="multipart/form-data" id="form1">
+    <input type="file" name="txtFile" id="txtFile"/>
+</form>
+<p>&nbsp;</p>
+<button id="btnSave">保存图片</button>
+<script type="text/javascript">
+    var bgDiv = document.getElementById("bgDiv");
+    var bgContent = bgDiv.getContext('2d');
+    var txtFile = document.getElementById("txtFile");
+    var disImg = document.getElementById("disImg");
+    var cj =document.getElementById("cj");
+
+    var btnSave = document.getElementById("btnSave");
+    var topL=50;
+    var leftL=50;
+
+    txtFile.onchange=function(){
+        if(txtFile.files[0].size>2*1024*1024){
+            alert("上传图片过大，请保持在2M内")
+        }else {
+            uploadImg();
+        }
+    }
+
+    //裁剪框的移动
+    cj.onmousedown=function(){
+        var e=window.event||arguments[0];
+        var downX= e.clientX;
+        var downY= e.clientY;
+        var positionX=parseInt(document.defaultView.getComputedStyle(cj,null).left);
+        var positionY=parseInt(document.defaultView.getComputedStyle(cj,null).top);
+        var chaX=downX-positionX;
+        var chaY=downY-positionY;
+        cj.onmousemove=function(){
+            var e=window.event||arguments[0];
+            var X= e.clientX;
+            var Y= e.clientY;
+            var left = parseInt(X)-chaX;
+            var top = parseInt(Y)-chaY;
+
+            if(left>0&&left<150){
+                cj.style.left=left+"px";
+                leftL=left;
+            }
+            if(top>0&&top<150){
+                cj.style.top=top+"px";
+                topL=top;
+            }
+
+        }
+        cj.onmouseup=function(){
+            cj.onmousemove=null;
+        }
+    }
+    //保存图片 按钮事件
+    btnSave.onclick=function(){
+        var crop_canvas = document.createElement('canvas');
+        crop_canvas.height=150;
+        crop_canvas.width=150;
+//        console.log(disImg);
+//        console.log(leftL);
+//        console.log(topL);
+        crop_canvas.getContext('2d').drawImage(disImg,leftL, topL, 150, 150,0,0,150,150);
+        var img_dataUrl = crop_canvas.toDataURL("image/png"); //toDataURL:Canvas内容转化成图片的方法,base64格式
+        document.getElementById("head").src=img_dataUrl;
+
+        //保存裁剪后的头像
+        var httpRequest;
+        if(window.XMLHttpRequest){ //DOM方式
+            httpRequest = new XMLHttpRequest(); //DOM的方式
+        }else if(window.ActiveXObject){
+            httpRequest = new ActiveXObject("Microsoft.XMLHTTP"); //IE浏览器
+        }
+        //2. 打开连接(发起请求)
+        // open 的三个参数 ， 1个参数： 提交方式get/post 2. 提交的URL地址， 3. 同步/异步application/x-www-form-urlencoded
+        httpRequest.open("post","upload");
+        httpRequest.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+
+        //3. 接收影响回来的数据
+        httpRequest.onreadystatechange=function(){
+            if(httpRequest.status==200&&httpRequest.readyState==4) {
+
+                console.log(httpRequest.responseText);
+
+            }
+        }
+
+        httpRequest.send("imgData="+img_dataUrl); // 发送信息
+    }
+
+    function uploadImg(){
+        // 1. 创建一个对象
+        var httpRequest;
+        if(window.XMLHttpRequest){ //DOM方式
+            httpRequest = new XMLHttpRequest(); //DOM的方式
+        }else if(window.ActiveXObject){
+            httpRequest = new ActiveXObject("Microsoft.XMLHTTP"); //IE浏览器
+        }
+        //2. 打开连接(发起请求)
+        // open 的三个参数 ， 1个参数： 提交方式get/post 2. 提交的URL地址， 3. 同步/异步application/x-www-form-urlencoded
+        httpRequest.open("post","uploadImage.do");
+        //httpRequest.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        //注：这里虽是post方式，但不指头类型
+
+        //3. 接收影响回来的数据
+        httpRequest.onreadystatechange=function(){
+            if(httpRequest.status==200&&httpRequest.readyState==4) {
+                //canvas显示图片
+                var json = JSON.parse(httpRequest.responseText);
+
+                var img = new Image();
+                img.src = json.msg.url;
+                img.onload=function(){
+                    bgContent.drawImage(img,0,0,img.width,img.height,0,0,300,300);
+                    disImg.src=bgDiv.toDataURL('image/png'); //将Canvas 里的图片导出来
+                }
+            }
+        }
+
+        //4.如果 提交方式为get请求，那发送为null
+        //如果 提交方式 为post，那这个地方跟参数
+        //FormData的最大优点就是我们可以异步上传一个二进制文件
+        var form = document.getElementById('form1');
+        var formData = new FormData(form);
+
+        httpRequest.send(formData); // 发送信息
+
+    }
+
+</script>
+</body>
+</html>
