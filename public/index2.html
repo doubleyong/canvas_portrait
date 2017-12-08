@@ -89,7 +89,27 @@
         if(txtFile.files[0].size>2*1024*1024){
             alert("上传图片过大，请保持在2M内")
         }else {
+
             uploadImg();
+            // 注：在这里时，将图片上传到了服务器进行保存，
+            // 如果这时不想保存，但是又想显示，如何做?? , 可以使用以下代码实现
+            // 详见：http://bugshouji.com/bbs-read-run?tid=182 文章说明
+            /* 
+            txtfile.onreadystatechangeange=function(){ 
+                var file = txtfile.files[0]; 
+                 var reader = new FileReader(file); 
+                 reader.readAsDataURL(file); reader.onload=function(){ 
+                     img.src = this.result; //这里的this就是指reader读取出来的结果 img.onload=function(){ 
+                         context.drawImage(img,0,0,300,400); 
+                          // DrawImage(img); //缩放图片 
+                          // context.drawImage(img,0,0,img.width,img.height); //按缩放后图片大小进行绘制 
+                         img.src = myCanvas.toDataURL("image/png"); 
+
+                } 
+            } 
+        } 
+ 
+            */
         }
     }
 
